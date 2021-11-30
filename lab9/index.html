@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menu</title>
+
+</head>
+<body onload="getDataFromServer()">
+</body>
+<script>
+
+  function Container() {
+this.html = '';
+this.id = '';
+this.className = '';
+}
+
+Container.prototype.render = function() {
+return this.html;
+};
+
+// 1
+Container.prototype.remove = function() {
+var el = document.getElementById(this.id);
+el.parentElement.removeChild(el);
+};
+
+function Menu(id, className, items) {
+Container.call(this);
+
+this.id = id;
+this.className = className;
+this.items = items;
+}
+
+Menu.prototype = Object.create(Container.prototype);
+Menu.prototype.constructor = Menu;
+
+Menu.prototype.render = function() {
+var result = '<ul id="' + this.id + '" class="' + this.className + '">';
+
+for (var key in this.items) {
+  if (this.items[key] instanceof MenuItem || this.items[key] instanceof SubMenu) {
+    result += this.items[key].render();
+  }
+}
+
+this.html = result += '</ul>';
+return this.html;
+};
+
+function MenuItem(href, className, itemName) {
+Container.call(this);
+
+this.href = href;
+this.className = className;
+this.itemName = itemName;
+}
+
+MenuItem.prototype = Object.create(Container.prototype);
+MenuItem.prototype.constructor = MenuItem;
+
+MenuItem.prototype.render = function() {
+this.html = '<li class="' + this.className + '"><a href="' + this.href + '">' + this.itemName + '</a></li>';
+return this.html;
+};
+
+//2
+function SubMenu(href, id, className,  itemName, items) {
+Menu.call(this, id, className, items);
+
+this.href = href;
+this.itemName = itemName;
+}
+
+SubMenu.prototype = Object.create(Menu.prototype);
+SubMenu.constructor = SubMenu;
+
+SubMenu.prototype.render = function() {
+var result =
+  '<li id="' + this.id + '" class="' + this.className + '"><a href="' + this.href + '">' + this.itemName + '</a><ul>';
+
+for (var key in this.items) {
+  if (this.items[key] instanceof MenuItem || this.items[key] instanceof SubMenu) {
+    result += this.items[key].render();
+  }
+}
+
+this.html = result += '</ul></li>';
+
+return this.html;
+};
+
+// var item1 = new MenuItem('#', 'menu-item', 'Головна');
+
+// var subItem1 = new MenuItem('#', 'menu-item', 'Перші страви');
+// var subItem2 = new MenuItem('#', 'menu-item', 'Другі страви');
+
+// var subItem3 = new MenuItem('#', 'menu-item', 'Морозиво');
+// var subItem4 = new MenuItem('#', 'menu-item', 'Торти');
+
+// var subItem5 = new MenuItem('#', 'menu-item', 'Хелловін');
+
+// var subItem6 = new MenuItem('#', 'menu-item', 'Відвідувачі');
+// var subItem7 = new MenuItem('#', 'menu-item', 'Частування');
+
+
+// var subItems2 = {
+//   0: subItem3,
+//   1: subItem4
+// };
+
+// var subItems3 = {
+//   0: subItem6,
+//   1: subItem7
+// };
+
+
+
+// var subMenu2 = new SubMenu('submenu2', 'submenu2', '#', 'Десерти', subItems2);
+// var subMenu3 = new SubMenu('submenu3', 'submenu3', '#', 'День закоханих', subItems3);
+
+// var subItems = {
+//   0: subItem1,
+//   1: subItem2,
+//   2: subMenu2
+// };
+
+// var subItems1 = {
+//   0: subItem5,
+//   1: subMenu3
+// };
+
+// var subMenu = new SubMenu('submenu', 'submenu', '#', 'Каталог', subItems);
+// var subMenu1 = new SubMenu('submenu1', 'submenu1', '#', 'Галерея', subItems1);
+
+
+
+// var items = {
+//   0: item1,
+//   1: subMenu,
+//   2: subMenu1
+// };
+function getDataFromServer(){
+        // URL на который будем отправлять GET запрос
+    const requestURL = 'http://weblabdata.alwaysdata.net/';
+    console.log("Function called");
+    const xhr = new XMLHttpRequest();
+    xhr.open('GET', requestURL);
+
+    console.log("Making request");
+
+    xhr.onreadystatechange = function () {
+      console.log(xhr.readyState + " and " + xhr.status);
+      console.log(xhr.responseText);
+      //console.log(JSON.parse(xhr.responseText));
+      if (xhr.readyState !== 4 || xhr.status !== 200) {
+        console.log("function isnt executed");
+        return;
+      }
+      const response = JSON.parse(xhr.responseText);
+      var items = {};
+      for (let i = 0, length = response.length; i < length; i++) {
+        var item1 = new MenuItem('#', 'menu-item', response[i]);
+        console.log(response[i]);
+        items[i] = item1;
+      }
+      
+      
+      var menu = new Menu('menu', 'menu', items);
+      var div = document.write(menu.render());
+    }
+    xhr.send();
+  }
+</script>
+</html>

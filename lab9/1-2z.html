@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+</body>
+<script>
+   function Container() {
+       this.html = '';
+       this.id = '';
+       this.className = '';
+   }
+
+   Container.prototype.render = function() {
+       return this.html;
+   };
+
+   // 1
+   Container.prototype.remove = function() {
+       var el = document.getElementById(this.id);
+       el.parentElement.removeChild(el);
+   };
+
+   function Menu(id, className, items) {
+       Container.call(this);
+
+       this.id = id;
+       this.className = className;
+       this.items = items;
+   }
+
+   Menu.prototype = Object.create(Container.prototype);
+   Menu.prototype.constructor = Menu;
+
+   Menu.prototype.render = function() {
+       var result = '<ul id="' + this.id + '" class="' + this.className + '">';
+
+       for (var key in this.items) {
+           if (this.items[key] instanceof MenuItem || this.items[key] instanceof SubMenu) {
+               result += this.items[key].render();
+           }
+       }
+
+       this.html = result += '</ul>';
+       return this.html;
+   };
+
+   function MenuItem(url, name) {
+       Container.call(this);
+
+       this.url = url;
+       this.name = name;
+   }
+
+   MenuItem.prototype = Object.create(Container.prototype);
+   MenuItem.prototype.constructor = MenuItem;
+
+   MenuItem.prototype.render = function() {
+       this.html = '<li class="' + this.className + '"><a href="' + this.url + '">' + this.name + '</a></li>';
+       return this.html;
+   };
+
+   //2
+   function SubMenu(id, className, name, items) {
+       Menu.call(this, id, className, name);
+
+       this.id = id;
+       this.class = className;
+       this.name = name;
+       this.items = items;
+   }
+
+   SubMenu.prototype = Object.create(Menu.prototype);
+   SubMenu.constructor = SubMenu;
+
+   SubMenu.prototype.render = function() {
+       var result =
+           '<li id="' + this.id + '" class="' + this.class + '">' + this.name + '</a><ul>';
+
+       for (var key in this.items) {
+           if (this.items[key] instanceof MenuItem || this.items[key] instanceof SubMenu) {
+               result += this.items[key].render();
+           }
+       }
+
+       this.html = result += '</ul></li>';
+
+       return this.html;
+   };
+
+
+
+   function getXhr(){
+       return window.XMLHttpRequest? new XMLHttpRequest()
+           : new ActiveXObject("Microsoft.XMLHTTP");
+   }
+
+   function doGet(url, callback){
+       var xhr = getXhr();
+       xhr.overrideMimeType('text/json');
+       xhr.onreadystatechange = function(){
+           if (xhr.readyState == 4 && xhr.status == 200){
+               callback(JSON.parse(xhr.responseText));
+           }
+       }
+       xhr.open('GET', url, true);
+       xhr.send(null);
+   }
+
+   doGet('http://weblabdata.alwaysdata.net/', function(result){
+       var children = parseChildren(result.children);
+       var menu = new Menu(result.id, result.class, children);
+       document.write(menu.render());
+   });
+
+   function parseChildren(children){
+       var result = [];
+       for(var key in children){
+           var item = children[key];
+           if(item.children){
+               result.push(new SubMenu(item.id, item.class, item.name,
+                   parseChildren(item.children)));
+           } else {
+               result.push(new MenuItem(item.url, item.name));
+           }
+       }
+       return result;
+   }
+</script>
+</html>
